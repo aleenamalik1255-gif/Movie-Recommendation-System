@@ -6,7 +6,8 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 import os
-
+from flask import Flask, render_template, request, jsonify
+app = Flask(__name__)
 # -----------------------------
 # Initialize Flask app
 # -----------------------------
@@ -60,9 +61,4 @@ def recommend():
 # -----------------------------
 # Run the app
 # -----------------------------
-import os
-
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))  # Use Render's PORT if available
-    app.run(host="0.0.0.0", port=port)
 
