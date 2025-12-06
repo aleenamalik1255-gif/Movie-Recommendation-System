@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Netflix Style Movie Recommender</title>
+<style>
+    body {
+        font-family: Arial, Helvetica, sans-serif;
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
+        background-image: url("background.jpg");
+        background-size: cover;
+        background-position: center;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .container {
+        background: rgba(0, 0, 0, 0.85);
+        padding: 35px;
+        width: 550px; /* widened to fit 3 cards in first row */
+        border-radius: 12px;
+        text-align: center;
+        box-shadow: 0 0 25px rgba(255, 0, 0, 0.4);
+        border: 1px solid #e50914;
+    }
+
+    h1 {
+        color: #e50914;
+        font-size: 28px;
+        margin-bottom: 25px;
+        letter-spacing: 1px;
+    }
+
+    input {
+        width: 90%;
+        padding: 12px;
+        border-radius: 6px;
+        border: 1px solid #333;
+        background: #111;
+        color: white;
+        font-size: 15px;
+    }
+
+    input::placeholder {
+        color: #777;
+    }
+
+    button {
+        width: 90%;
+        padding: 12px;
+        margin-top: 18px;
+        background: #e50914;
+        color: white;
+        font-size: 17px;
+        font-weight: bold;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+    button:hover {
+        background: #b20710;
+        transform: scale(1.03);
+    }
+
+    /* Grid for recommended movies */
+    .result-box {
+        margin-top: 25px;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr); /* first row: 3 cards */
+        grid-template-rows: repeat(2, auto); /* second row: 2 cards */
+        gap: 12px;
+        justify-items: center;
+        display: none;
+    }
+
+    .movie-card {
+        background: rgba(255, 255, 255, 0.08);
+        width: 160px; /* fixed width for 3 cards in a row */
+        border-radius: 10px;
+        padding: 12px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        box-shadow: inset 0 0 10px rgba(255, 0, 0, 0.3);
+        cursor: default;
+        transition: transform 0.12s ease, box-shadow 0.12s ease;
+    }
+
+    .movie-card:hover {
+        transform: translateY(-4px);
+        box-shadow: inset 0 0 10px rgba(255, 0, 0, 0.5), 0 8px 20px rgba(255,0,0,0.5);
+    }
+
+    .poster-placeholder {
+        width: 48px;
+        height: 48px;
+        border-radius: 8px;
+        background: #e50914;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 18px;
+        flex-shrink: 0;
+    }
+
+    .movie-title {
+        color: white;
+        font-size: 16px;
+        font-weight: bold;
+        text-align: left;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+</style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Movie Recommender</h1>
+    <input type="text" id="movieInput" placeholder="Search your favorite movie">
+    <button onclick="getRecommendations()">Get Recommendations</button>
+
+    <div id="result" class="result-box"></div>
+</div>
+
+<script>
+function getRecommendations() {
+    const movie = document.getElementById("movieInput").value;
+    const resultDiv = document.getElementById("result");
+
+    if (!movie.trim()) {
+        resultDiv.style.display = "grid";
+        resultDiv.innerHTML = '<div style="color:#ffd1d1;">❌ Please type a movie name first!</div>';
+        return;
+    }
+
+    fetch("http://127.0.0.1:5000/recommend", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ movie_name: movie })
+    })
+    .then(res => res.json())
+    .then(data => {
+        resultDiv.innerHTML = "";
+        resultDiv.style.display = "grid";
+
+        if (data.error) {
+            resultDiv.innerHTML = '<div style="color:#ffd1d1;">❗ ' + data.error + '</div>';
+        } else {
+            // Arrange 3+2 manually
+            data.recommendations.forEach((title, index) => {
+                const card = document.createElement("div");
+                card.className = "movie-card";
+
+                const poster = document.createElement("div");
+                poster.className = "poster-placeholder";
+                const initials = title.split(" ").map(w => w[0]).slice(0,2).join("").toUpperCase();
+                poster.textContent = initials;
+
+                const t = document.createElement("div");
+                t.className = "movie-title";
+                t.textContent = title;
+
+                card.appendChild(poster);
+                card.appendChild(t);
+                resultDiv.appendChild(card);
+            });
+
+            // Adjust grid for 3+2
+            resultDiv.style.gridTemplateColumns = "repeat(3, 1fr)";
+            resultDiv.children[3].style.gridColumn = "span 1"; // first in second row
+            resultDiv.children[4].style.gridColumn = "span 1"; // second in second row
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        resultDiv.innerHTML = '<div style="color:#ffd1d1;">⚠️ Unable to connect to backend!</div>';
+        resultDiv.style.display = "grid";
+    });
+}
+</script>
+
+</body>
+</html>
